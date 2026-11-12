@@ -243,7 +243,7 @@
         <h3 class="rp-h">Từng tháng</h3>
         ${d.thang.length ? d.thang.map(m => `<div class="inc-row">
           <div class="inc-main"><b>${esc(ky(m.ky))}</b>
-            <small>Tổng ${vnd(m.tongThuNhap)} · trừ thuế TNCN ${vnd(m.khauTru)}</small>
+            <small>${m.ngayNhan ? 'Tổng' : 'Tạm tính'} ${vnd(m.tongThuNhap)} · trừ thuế TNCN ${vnd(m.khauTru)}</small>
             <small>${m.ngayNhan ? 'Nhận ngày ' + dm(m.ngayNhan) : 'Hạn trả ' + dm(m.hanTra)}</small></div>
           <div class="inc-right"><b>${vnd(m.thucNhan)}</b>${m.ngayNhan ? '<span class="tag done">Đã nhận</span>' : m.hanTra < t ? '<span class="tag late">Chậm trả</span>' : '<span class="tag">Chưa đến hạn</span>'}</div>
         </div>`).join('') : '<p class="hint rp-pad">Chưa có kỳ lương nào.</p>'}
@@ -252,11 +252,11 @@
         <h3 class="rp-h">Cơ cấu lương mỗi tháng</h3>
         <div class="kv"><span>Lương chính</span><b>${vnd(c.luongChinh)}</b></div>
         <div class="kv"><span>Phụ cấp điện thoại, xăng</span><b>${vnd(c.phuCap)}</b></div>
-        <div class="kv"><span>Ăn trưa ${vnd(c.anTrua)} × ${c.ngayCong} ngày công</span><b>${vnd(c.anTrua * c.ngayCong)}</b></div>
+        <div class="kv"><span>Ăn trưa ${vnd(c.anTrua)} × ${c.ngayCong} ngày công (dự kiến, chờ chấm công)</span><b>${vnd(c.anTrua * c.ngayCong)}</b></div>
         <div class="kv sum"><span>Tổng thu nhập</span><b>${vnd(gross)}</b></div>
         <div class="kv"><span>Thuế TNCN tạm khấu trừ</span><b>−${vnd(c.thueThang)}</b></div>
         <div class="kv sum"><span>Thực nhận dự kiến</span><b>${vnd(gross - c.thueThang)}</b></div>
-        ${d.hopDong ? `<p class="hint rp-pad">Hợp đồng ${esc(d.hopDong.so)}, từ ${esc(dm(d.hopDong.tu))} đến ${esc(dm(d.hopDong.den))}/${esc(String(d.hopDong.den).slice(0, 4))}. Trả lương: ${esc(d.hopDong.kyTra)}. Ngày công thực tế theo chấm công.</p>` : ''}
+        ${d.hopDong ? `<p class="hint rp-pad">Hợp đồng ${esc(d.hopDong.so)}, từ ${esc(dm(d.hopDong.tu))} đến ${esc(dm(d.hopDong.den))}/${esc(String(d.hopDong.den).slice(0, 4))}. Trả lương: ${esc(d.hopDong.kyTra)}. Số chưa nhận là tạm tính theo 26 ngày công; kế toán chốt theo ngày công thực tế. Thuế TNCN do công ty khấu trừ, nộp thay; bảo hiểm tai nạn lao động do công ty đóng, không trừ lương.</p>` : ''}
       </section>`;
   }
 

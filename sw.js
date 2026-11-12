@@ -1,5 +1,5 @@
 // Mở nhanh: giao diện lấy ngay từ bộ nhớ máy, đồng thời tải bản mới ngầm cho lần sau. Nhận thông báo bật lên.
-const V = 'vnd-viec-v12';
+const V = 'vnd-viec-v13';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'favicon.png', 'jspdf.umd.min.js'];
 self.addEventListener('install', e => {
