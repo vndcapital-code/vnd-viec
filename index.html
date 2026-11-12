@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<title>VND Việc</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VND Việc">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v10H5z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10h3v10zm6 0V4h3v16zm6 0v-7h3v7z"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 5h14a2 2 0 0 1 2 2v1h-5a4 4 0 0 0 0 8h5v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm11 5h6v4h-6a2 2 0 0 1 0-4z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 1 7.4 5H17v2h6V5h-2v2.3A10 10 0 1 0 22 13h-2a8 8 0 1 1-8-9z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.4 4.6 8 12l7.4 7.4-1.4 1.4L5.2 12 14 3.2z"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M9 3h6l1.8 2H20a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3.2zm3 5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 13h16l-5-6-3.5 4.2L9 12zM8 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5zM8 13v2h8v-2zm0 4v2h6v-2z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M2 21 23 12 2 3v7l15 2-15 2z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M12 3c5 0 9 3.6 9 8s-4 8-9 8c-1 0-2-.1-2.9-.4L4 21l1.3-4A7.6 7.6 0 0 1 3 11c0-4.4 4-8 9-8z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6L20.1 8.4 18.7 7z"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M16.5 6.5v10a4.5 4.5 0 0 1-9 0V5a3 3 0 0 1 6 0v10.5a1.5 1.5 0 0 1-3 0V6.5H9v9a3 3 0 0 0 6 0V5a4.5 4.5 0 0 0-9 0v11.5a6 6 0 0 0 12 0v-10z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4z"/></symbol>
+</svg>
+
+<div id="app">
+  <!-- Đăng nhập -->
+  <section id="scr-login" class="login" hidden>
+    <div class="login-box">
+      <img src="icon-512.png" alt="" class="login-logo">
+      <div class="wordmark big">VND Việc</div>
+      <p>Giao việc, trả lời và gửi giấy tờ của VND Capital.</p>
+      <div id="gsi-btn" class="gsi"></div>
+      <p id="login-msg" class="err" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- Khung chính -->
+  <section id="scr-main" hidden>
+    <header class="appbar">
+      <div class="wordmark">VND Việc</div>
+      <div class="appbar-actions">
+        <button class="round" id="btn-search" aria-label="Tìm việc"><svg><use href="#i-search"/></svg></button>
+        <button class="round" id="btn-refresh" aria-label="Tải lại"><svg><use href="#i-refresh"/></svg></button>
+        <span class="avatar sm" id="me-avatar" aria-hidden="true"></span>
+      </div>
+    </header>
+    <div class="searchbar" id="searchbar" hidden>
+      <svg><use href="#i-search"/></svg>
+      <input id="q" type="search" placeholder="Tìm mã việc, biển số, nội dung" autocomplete="off" aria-label="Tìm việc">
+    </div>
+
+    <main id="tab-viec" class="tab">
+      <div class="stats" id="stats"></div>
+      <div class="chips" id="chips" role="tablist" aria-label="Lọc việc"></div>
+      <div id="feed" class="feed" aria-live="polite"></div>
+      <p id="empty" class="empty" hidden></p>
+    </main>
+    <main id="tab-lich" class="tab" hidden><div class="card soon-card"><h2>Lịch</h2><p>Hạn việc, hạn thuế, ngày thu tiền thuê, giấy tờ xe theo ngày. Có ở bản cập nhật tiếp theo.</p></div></main>
+    <main id="tab-thunhap" class="tab" hidden><div class="card soon-card"><h2>Thu nhập</h2><p>Lương, phụ cấp, thuế, đã nhận hay chưa từng tháng. Có ở bản cập nhật tiếp theo.</p></div></main>
+    <main id="tab-baocao" class="tab" hidden><div class="card soon-card"><h2>Báo cáo</h2><p>Lợi nhuận, dòng tiền, công nợ và hạn các loại. Có ở bản cập nhật tiếp theo.</p></div></main>
+
+    <button id="fab-new" class="fab" hidden><svg><use href="#i-plus"/></svg>Giao việc</button>
+    <nav class="tabbar" id="tabbar" aria-label="Mục chính"></nav>
+  </section>
+
+  <!-- Chi tiết việc -->
+  <section id="scr-task" class="page" hidden aria-label="Chi tiết việc">
+    <header class="pagebar">
+      <button class="round ghost" data-back aria-label="Quay lại"><svg><use href="#i-back"/></svg></button>
+      <div class="pagebar-title"><span id="t-plate" class="plate"></span><span id="t-status" class="tag"></span></div>
+    </header>
+    <div class="page-body" id="t-body"></div>
+    <form id="composer" class="composer" autocomplete="off">
+      <div class="composer-top">
+        <div class="seg" role="radiogroup" aria-label="Loại tin">
+          <label><input type="radio" name="loai" value="Trả lời" checked><span>Trả lời</span></label>
+          <label><input type="radio" name="loai" value="Hỏi Trợ Lý X"><span>Hỏi Trợ Lý X</span></label>
+        </div>
+        <label id="merge-row" class="merge" hidden><input type="checkbox" id="merge-pdf" checked><span>Gộp ảnh thành 1 PDF</span></label>
+      </div>
+      <div id="attach-strip" class="attach-strip" hidden></div>
+      <div class="composer-row">
+        <button type="button" class="round tint" id="btn-plus" aria-label="Thêm ảnh hoặc tệp"><svg><use href="#i-plus"/></svg></button>
+        <div class="input-pill">
+          <textarea id="reply-text" rows="1" placeholder="Viết trả lời…" aria-label="Nội dung trả lời"></textarea>
+          <button type="button" class="pill-icon" id="btn-cam-quick" aria-label="Chụp nhiều trang"><svg><use href="#i-camera"/></svg></button>
+        </div>
+        <button type="submit" class="round send" id="btn-send" aria-label="Gửi"><svg><use href="#i-send"/></svg></button>
+      </div>
+      <div id="progress" class="progress" hidden><div id="progress-bar"></div><span id="progress-txt"></span></div>
+    </form>
+  </section>
+
+  <!-- Bảng chọn của nút + -->
+  <div id="plus-menu" class="sheet-backdrop" hidden>
+    <div class="sheet" role="menu" aria-label="Thêm vào trả lời">
+      <div class="sheet-handle"></div>
+      <button type="button" data-act="camera" role="menuitem"><span class="ic o"><svg><use href="#i-camera"/></svg></span><span><b>Chụp nhiều trang</b><small>Chụp liên tục từng trang giấy tờ</small></span></button>
+      <button type="button" data-act="photos" role="menuitem"><span class="ic g"><svg><use href="#i-image"/></svg></span><span><b>Chọn nhiều ảnh</b><small>Chọn một lần nhiều ảnh trong máy</small></span></button>
+      <button type="button" data-act="files" role="menuitem"><span class="ic b"><svg><use href="#i-file"/></svg></span><span><b>Chọn nhiều tệp</b><small>PDF, Word, Excel, hóa đơn XML</small></span></button>
+    </div>
+  </div>
+  <input type="file" id="in-photos" accept="image/*" multiple hidden>
+  <input type="file" id="in-files" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.xml,image/*,application/pdf" multiple hidden>
+  <input type="file" id="in-capture" accept="image/*" capture="environment" hidden>
+
+  <!-- Máy ảnh -->
+  <div id="cam" class="cam" hidden>
+    <div class="cam-top"><button type="button" id="cam-cancel" class="cam-txt">Hủy</button><span id="cam-count">0 trang</span><button type="button" id="cam-done" class="cam-txt strong">Xong</button></div>
+    <video id="cam-video" playsinline autoplay muted></video>
+    <div class="cam-strip" id="cam-strip"></div>
+    <div class="cam-bar"><button type="button" id="cam-shot" class="shutter" aria-label="Chụp trang"></button></div>
+  </div>
+
+  <!-- Giao việc mới -->
+  <section id="scr-new" class="page" hidden aria-label="Giao việc mới">
+    <header class="pagebar">
+      <button class="round ghost" data-back aria-label="Quay lại"><svg><use href="#i-back"/></svg></button>
+      <div class="pagebar-title"><strong>Giao việc mới</strong></div>
+    </header>
+    <form id="new-form" class="page-body form" novalidate>
+      <div class="card form-card">
+        <label class="field"><span>Giao cho</span><select name="giaoCho" required></select></label>
+        <div class="row2">
+          <label class="field"><span>Loại</span><select name="loai" required></select></label>
+          <label class="field"><span>Mức độ</span><select name="mucDo" required></select></label>
+        </div>
+        <label class="field"><span>Phòng giao</span><select name="phong" required></select></label>
+        <label class="field"><span>Việc cần làm</span><textarea name="viec" rows="4" required placeholder="Ghi rõ việc và kết quả cần có"></textarea></label>
+        <label class="field"><span>Vì sao / căn cứ</span><textarea name="canCu" rows="2" placeholder="Không bắt buộc"></textarea></label>
+        <label class="field"><span>Hạn</span><input type="date" name="han" required></label>
+        <p id="new-hint" class="hint"></p>
+        <p id="new-err" class="err" role="alert"></p>
+      </div>
+      <button type="submit" class="btn-primary">Giao việc</button>
+    </form>
+  </section>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+</div>
+<script src="config.js"></script>
+<script src="jspdf.umd.min.js" defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>
