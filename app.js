@@ -177,8 +177,10 @@
     history.pushState({ s: 'task' }, '');
     $('#scr-task').hidden = false;
     $('#t-plate').textContent = ma; $('#t-status').textContent = ''; $('#t-status').className = 'tag';
-    $('#t-body').innerHTML = '<div class="card skel"></div>';
     resetComposer();
+    const cached = S.tasks.find(t => t.ma === ma);
+    if (cached) { S.current = Object.assign({}, cached, { lichSu: null }); renderTask(); }
+    else $('#t-body').innerHTML = '<div class="card skel"></div>';
     try {
       S.current = await api('getTask', { ma }); renderTask(); $('#t-body').scrollTop = 0;
       if (go === 'reply') $('#reply-text').focus();
@@ -208,7 +210,8 @@
         ${canDone ? `<button type="button" class="btn-done" id="btn-done">${icon('check')}Báo đã làm xong</button>` : ''}
       </section>
       <section class="card comments">
-        <div class="comments-title">Trao đổi (${(t.lichSu || []).length})</div>
+        <div class="comments-title">Trao đổi${t.lichSu ? ' (' + t.lichSu.length + ')' : ''}</div>
+        ${t.lichSu === null ? '<p class="hint" style="padding:0 4px 8px">Đang tải trao đổi…</p>' : ''}
         ${(t.lichSu || []).map(m => `
           <div class="cmt ${m.nguoi === S.me.tenViec ? 'me' : ''}">
             <span class="avatar xs ${avClass(m.nguoi)}">${esc(initials(m.nguoi))}</span>
@@ -218,7 +221,7 @@
               </div>
               <div class="cmt-sub"><span>${esc(when(m.thoiGian))}</span>${m.loai === 'Hỏi Trợ Lý X' ? '<span class="ask">Hỏi Trợ Lý X</span>' : ''}</div>
             </div>
-          </div>`).join('') || '<p class="hint" style="padding:0 4px 8px">Chưa có trao đổi. Viết trả lời hoặc gửi giấy tờ ở ô bên dưới.</p>'}
+          </div>`).join('') || (t.lichSu === null ? '' : '<p class="hint" style="padding:0 4px 8px">Chưa có trao đổi. Viết trả lời hoặc gửi giấy tờ ở ô bên dưới.</p>')}
       </section></div>`;
     const bd = $('#btn-done');
     if (bd) bd.onclick = async () => {
