@@ -123,7 +123,7 @@
 
     let chips = [];
     if (isAdmin()) {
-      const ppl = [...new Set(S.tasks.map(t => t.giaoCho))].sort((a, b) => (a === S.me.tenViec ? -1 : b === S.me.tenViec ? 1 : a.localeCompare(b)));
+      const ppl = [...new Set(S.tasks.filter(t => !t.ngayXong).map(t => t.giaoCho))].sort((a, b) => (a === S.me.tenViec ? -1 : b === S.me.tenViec ? 1 : a.localeCompare(b)));
       chips = [['all', 'Tất cả'], ...ppl.map(p => [p, p === S.me.tenViec ? 'Việc của tôi' : p])]
         .map(([k, l]) => `<button class="chip" role="tab" data-p="${esc(k)}" aria-selected="${S.person === k && S.filter !== 'done'}">${esc(l)}</button>`);
       chips.push(`<button class="chip" role="tab" data-f="done" aria-selected="${S.filter === 'done'}">Đã xong</button>`);
