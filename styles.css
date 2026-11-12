@@ -34,7 +34,7 @@ svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
 .hint:empty { display: none; }
 
 /* ---------- Thương hiệu ---------- */
-.wordmark { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; color: var(--orange); line-height: 1; }
+.wordmark { font-size: 26px; font-weight: 800; letter-spacing: -0.2px; color: var(--orange); line-height: 1; }
 .wordmark.big { font-size: 36px; margin: 14px 0 8px; }
 
 /* ---------- Đăng nhập ---------- */

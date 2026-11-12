@@ -1,5 +1,5 @@
 // Lưu sẵn giao diện để mở nhanh; dữ liệu luôn lấy mới từ máy chủ. Nhận thông báo bật lên.
-const V = 'vnd-viec-v9';
+const V = 'vnd-viec-v10';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'favicon.png', 'jspdf.umd.min.js'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL))); self.skipWaiting(); });
@@ -21,7 +21,7 @@ self.addEventListener('fetch', e => {
 self.addEventListener('push', e => {
   let j = {}; try { j = e.data ? e.data.json() : {}; } catch (x) { j = { data: { body: e.data && e.data.text() } }; }
   const d = j.data || j.notification || j;
-  const title = d.title || 'VND Việc';
+  const title = d.title || 'VND CAPITAL';
   e.waitUntil(self.registration.showNotification(title, {
     body: d.body || '', icon: 'icon-192.png', badge: 'favicon.png',
     tag: d.tag || undefined, renotify: !!d.tag, data: { link: d.link || './' }
