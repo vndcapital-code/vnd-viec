@@ -65,7 +65,20 @@
       <div id="feed" class="feed" aria-live="polite"></div>
       <p id="empty" class="empty" hidden></p>
     </main>
-    <main id="tab-lich" class="tab" hidden><div class="card soon-card"><h2>Lịch</h2><p>Hạn việc, hạn thuế, ngày thu tiền thuê, giấy tờ xe theo ngày. Có ở bản cập nhật tiếp theo.</p></div></main>
+    <main id="tab-lich" class="tab" hidden>
+      <section class="card cal">
+        <div class="cal-head">
+          <button class="round" id="cal-prev" aria-label="Tháng trước"><svg><use href="#i-back"/></svg></button>
+          <h2 id="cal-title" aria-live="polite"></h2>
+          <button class="round flip" id="cal-next" aria-label="Tháng sau"><svg><use href="#i-back"/></svg></button>
+          <button class="btn-today" id="cal-today">Hôm nay</button>
+        </div>
+        <div class="chips cal-chips" id="cal-chips" role="tablist" aria-label="Lọc lịch"></div>
+        <div class="cal-dow" aria-hidden="true"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
+        <div class="cal-grid" id="cal-grid" role="grid"></div>
+      </section>
+      <div id="cal-list" aria-live="polite"></div>
+    </main>
     <main id="tab-thunhap" class="tab" hidden><div class="card soon-card"><h2>Thu nhập</h2><p>Lương, phụ cấp, thuế, đã nhận hay chưa từng tháng. Có ở bản cập nhật tiếp theo.</p></div></main>
     <main id="tab-baocao" class="tab" hidden><div class="card soon-card"><h2>Báo cáo</h2><p>Lợi nhuận, dòng tiền, công nợ và hạn các loại. Có ở bản cập nhật tiếp theo.</p></div></main>
 

@@ -74,9 +74,10 @@
     ['viec', 'lich', 'thunhap', 'baocao'].forEach(k => $('#tab-' + k).hidden = k !== S.tab);
     $('#fab-new').hidden = !(isAdmin() && S.tab === 'viec');
     $('#searchbar').hidden = true;
+    if (S.tab === 'lich') loadCal();
   });
   $('#btn-search').onclick = () => { const sb = $('#searchbar'); sb.hidden = !sb.hidden; if (!sb.hidden) $('#q').focus(); else { $('#q').value = ''; S.q = ''; render(); } };
-  $('#btn-refresh').onclick = () => loadTasks(true);
+  $('#btn-refresh').onclick = () => S.tab === 'lich' ? loadCal(true) : loadTasks(true);
 
   // Điều hướng quay lại
   document.addEventListener('click', e => { if (e.target.closest('[data-back]')) history.back(); });
@@ -105,6 +106,80 @@
     return d < 0 ? 'Trễ ' + (-d) + ' ngày' : d === 0 ? 'Hạn hôm nay' : d === 1 ? 'Hạn ngày mai' : 'Hạn ' + dm(t.han);
   }
   const TAG = { late: ['late', 'Quá hạn'], soon: ['soon', 'Sắp đến hạn'], open: ['', 'Đang làm'], wait: ['wait', 'Chờ kiểm tra'], done: ['done', 'Đã xong'] };
+
+
+  // ---------------- Lịch ----------------
+  const CAL_TYPES = [['all', 'Tất cả'], ['viec', 'Việc'], ['thu', 'Thu'], ['chi', 'Chi'], ['phaply', 'Pháp lý, thuế'], ['xe', 'Giấy tờ xe'], ['hd', 'Hợp đồng']];
+  const CAL_NAME = { viec: 'Việc', thu: 'Thu tiền', chi: 'Chi tiền', phaply: 'Pháp lý, thuế', xe: 'Giấy tờ xe', hd: 'Hợp đồng' };
+  const C2 = { data: null, y: 0, m: 0, sel: '', type: 'all', loading: false };
+  const isoOf = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const money = n => n ? Number(n).toLocaleString('vi-VN') + 'đ' : '';
+  async function loadCal(force) {
+    if (C2.data && !force) return renderCal();
+    if (!C2.data) { const t = today(); C2.y = t.getFullYear(); C2.m = t.getMonth(); C2.sel = isoOf(t); }
+    $('#cal-list').innerHTML = '<div class="card skel"></div>';
+    try { C2.data = await api('listCalendar'); renderCal(); if (force) toast('Đã cập nhật'); }
+    catch (e) { $('#cal-list').innerHTML = `<p class="empty">Không tải được lịch. ${esc(e.message)}</p>`; }
+  }
+  const calEvents = () => (C2.data ? C2.data.suKien : []).filter(e => C2.type === 'all' || e.loai === C2.type);
+  const isLate = e => !e.xong && e.ngay < isoOf(today());
+  function renderCal() {
+    const ev = calEvents();
+    const byDay = {}; ev.forEach(e => (byDay[e.ngay] = byDay[e.ngay] || []).push(e));
+    $('#cal-title').textContent = 'Tháng ' + (C2.m + 1) + ', ' + C2.y;
+    $('#cal-chips').innerHTML = CAL_TYPES.map(([k, l]) => `<button class="chip" role="tab" data-t="${k}" aria-selected="${C2.type === k}">${k !== 'all' ? `<i class="dot d-${k}"></i>` : ''}${l}</button>`).join('');
+    const first = new Date(C2.y, C2.m, 1), start = new Date(first); start.setDate(1 - ((first.getDay() + 6) % 7));
+    const tIso = isoOf(today()); let html = '';
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      if (i >= 35 && d.getMonth() !== C2.m) break;
+      const k = isoOf(d), list = byDay[k] || [];
+      const types = [...new Set(list.map(e => e.loai))].slice(0, 4);
+      const late = list.some(isLate);
+      html += `<button class="cal-day${d.getMonth() !== C2.m ? ' out' : ''}${k === tIso ? ' today' : ''}${k === C2.sel ? ' sel' : ''}${late ? ' late' : ''}" data-d="${k}" role="gridcell"
+        aria-label="Ngày ${d.getDate()}/${d.getMonth() + 1}: ${list.length ? list.length + ' mốc' : 'trống'}" aria-selected="${k === C2.sel}">
+        <span class="n">${d.getDate()}</span><span class="dots">${types.map(t => `<i class="dot d-${t}"></i>`).join('')}</span>${list.length > 1 ? `<span class="cnt">${list.length}</span>` : ''}</button>`;
+    }
+    $('#cal-grid').innerHTML = html;
+    // Danh sách
+    const day = (byDay[C2.sel] || []).slice().sort((a, b) => a.xong - b.xong);
+    const sd = pd(C2.sel); const dayName = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'][sd.getDay()];
+    let out = `<section class="card agenda"><div class="agenda-title">${C2.sel === tIso ? 'Hôm nay, ' : ''}${dayName} ${dm(C2.sel)}/${sd.getFullYear()}</div>
+      ${day.length ? day.map(evRow).join('') : '<p class="hint agenda-empty">Không có mốc nào trong ngày này.</p>'}</section>`;
+    if (C2.sel === tIso) {
+      const late = ev.filter(isLate).sort((a, b) => a.ngay < b.ngay ? -1 : 1);
+      const next = ev.filter(e => !e.xong && e.ngay > tIso).slice(0, 12);
+      if (late.length) out += `<section class="card agenda"><div class="agenda-title red">Quá hạn chưa xong (${late.length})</div>${late.map(e => evRow(e, true)).join('')}</section>`;
+      if (next.length) out += `<section class="card agenda"><div class="agenda-title">Sắp tới</div>${next.map(e => evRow(e, true)).join('')}</section>`;
+    }
+    $('#cal-list').innerHTML = out;
+  }
+  function evRow(e, withDate) {
+    const st = e.xong ? '<span class="tag done">Xong</span>' : isLate(e) ? '<span class="tag late">Quá hạn</span>' : '';
+    const who = e.loai === 'viec' ? ' · ' + esc(displayName(e.nguoi)) : '';
+    return `<${e.ma ? 'button' : 'div'} class="ev ev-${e.loai}${e.xong ? ' is-done' : ''}" ${e.ma ? `data-ma="${esc(e.ma)}"` : ''}>
+      <i class="bar"></i>
+      <div class="ev-main">
+        <div class="ev-top"><span class="ev-kind">${withDate ? esc(dm(e.ngay)) + ' · ' : ''}${CAL_NAME[e.loai] || ''}${who}</span>${st}</div>
+        <div class="ev-label">${esc(e.nhan)}</div>
+        <div class="ev-text">${esc(e.tieuDe)}</div>
+        ${e.soTien ? `<div class="ev-money ${e.loai}">${e.loai === 'thu' ? '+' : e.loai === 'chi' ? '−' : ''}${money(e.soTien)}</div>` : ''}
+        ${e.ghiChu ? `<div class="ev-note">${esc(e.ghiChu)}</div>` : ''}
+      </div></${e.ma ? 'button' : 'div'}>`;
+  }
+  $('#cal-grid').addEventListener('click', e => {
+    const b = e.target.closest('.cal-day'); if (!b) return;
+    C2.sel = b.dataset.d; const d = pd(C2.sel);
+    if (d.getMonth() !== C2.m) { C2.y = d.getFullYear(); C2.m = d.getMonth(); }
+    renderCal();
+  });
+  $('#cal-chips').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; C2.type = b.dataset.t; renderCal(); });
+  const shiftMonth = k => { const d = new Date(C2.y, C2.m + k, 1); C2.y = d.getFullYear(); C2.m = d.getMonth();
+    const t = today(); C2.sel = (t.getFullYear() === C2.y && t.getMonth() === C2.m) ? isoOf(t) : isoOf(d); renderCal(); };
+  $('#cal-prev').onclick = () => shiftMonth(-1);
+  $('#cal-next').onclick = () => shiftMonth(1);
+  $('#cal-today').onclick = () => { const t = today(); C2.y = t.getFullYear(); C2.m = t.getMonth(); C2.sel = isoOf(t); renderCal(); };
+  $('#cal-list').addEventListener('click', e => { const b = e.target.closest('[data-ma]'); if (b) openTask(b.dataset.ma); });
 
   // ---------------- Bảng tin việc ----------------
   async function loadTasks(spin) {

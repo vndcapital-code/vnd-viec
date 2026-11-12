@@ -248,3 +248,50 @@ svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
   background: #303338; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
 
 @media (prefers-reduced-motion: reduce) { .page, .sheet, .sheet-backdrop, .skel { animation: none; } }
+
+/* ---------- Lịch ---------- */
+.cal { padding: 8px 0 10px; margin-top: 8px; }
+.cal-head { display: flex; align-items: center; gap: 4px; padding: 0 8px; }
+.cal-head h2 { flex: 1; margin: 0; text-align: center; font-size: 18px; font-weight: 800; color: var(--navy); }
+.cal-head .flip svg { transform: scaleX(-1); }
+.btn-today { height: 32px; padding: 0 12px; border-radius: 16px; background: var(--orange-soft); color: var(--orange-d); font-weight: 700; font-size: 13px; margin-left: 4px; }
+.cal-chips { padding: 8px 12px 6px; }
+.cal-chips .chip { display: inline-flex; align-items: center; gap: 6px; height: 32px; font-size: 13px; }
+.cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); padding: 6px 6px 2px; }
+.cal-dow span { text-align: center; font-size: 12px; font-weight: 700; color: var(--sub); }
+.cal-dow span:last-child { color: var(--red); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 0 6px; }
+.cal-day { position: relative; height: 52px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 6px; gap: 4px; }
+.cal-day:hover { background: var(--hover); }
+.cal-day .n { width: 28px; height: 28px; line-height: 28px; border-radius: 14px; font-weight: 600; font-size: 15px; color: var(--text); }
+.cal-day.out .n { color: #B0B3B8; }
+.cal-day.today .n { background: var(--orange); color: #fff; font-weight: 800; }
+.cal-day.sel { background: var(--navy-soft); }
+.cal-day.sel .n { box-shadow: 0 0 0 2px var(--navy); }
+.cal-day.today.sel .n { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--orange); }
+.cal-day.late:not(.today) .n { color: var(--red); font-weight: 800; }
+.cal-day .dots { display: flex; gap: 3px; height: 6px; }
+.cal-day .cnt { position: absolute; top: 2px; right: 4px; font-size: 10px; font-weight: 700; color: var(--sub); }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 3px; flex: none; }
+.cal-chips .dot { width: 8px; height: 8px; border-radius: 4px; }
+.d-viec { background: var(--navy); } .d-thu { background: var(--green); } .d-chi { background: var(--orange); }
+.d-phaply { background: #7B3FB8; } .d-xe { background: #0F8B8D; } .d-hd { background: #8A8D91; }
+.agenda { margin-top: 8px; padding: 4px 0; }
+.agenda-title { padding: 10px 16px 6px; font-weight: 800; font-size: 16px; color: var(--text); }
+.agenda-title.red { color: var(--red); }
+.agenda-empty { padding: 0 16px 12px; }
+.ev { display: flex; gap: 12px; width: 100%; text-align: left; padding: 10px 16px; border-top: 1px solid var(--line); background: none; }
+button.ev:hover { background: var(--hover); }
+.ev .bar { width: 4px; border-radius: 2px; flex: none; align-self: stretch; }
+.ev-viec .bar { background: var(--navy); } .ev-thu .bar { background: var(--green); } .ev-chi .bar { background: var(--orange); }
+.ev-phaply .bar { background: #7B3FB8; } .ev-xe .bar { background: #0F8B8D; } .ev-hd .bar { background: #8A8D91; }
+.ev-main { flex: 1; min-width: 0; }
+.ev-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ev-kind { font-size: 12px; font-weight: 700; color: var(--sub); }
+.ev-label { font-weight: 700; font-size: 14px; margin-top: 2px; color: var(--text); }
+.ev-text { font-size: 14px; color: var(--text); margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ev-money { font-weight: 800; font-size: 15px; margin-top: 4px; }
+.ev-money.thu { color: var(--green); } .ev-money.chi { color: var(--orange-d); }
+.ev-note { font-size: 12.5px; color: var(--sub); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ev.is-done .ev-label, .ev.is-done .ev-text { color: var(--sub); }
+@media (min-width: 680px) { .cal-day { height: 64px; } }
