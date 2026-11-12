@@ -361,3 +361,6 @@ button.avatar:focus-visible { outline: 3px solid var(--orange); outline-offset: 
 .acct-head small { display: block; font-size: 13px; color: var(--sub); }
 .ic.r { background: var(--red-soft); color: var(--red); }
 .ic svg { width: 22px; height: 22px; fill: currentColor; }
+#btn-refresh.spin svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { #btn-refresh.spin svg { animation-duration: 3s; } }

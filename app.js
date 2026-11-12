@@ -18,7 +18,10 @@
     });
     const j = await res.json();
     if (!j.ok) {
-      if (/đăng nhập/i.test(j.error)) { setTk(''); showLogin(j.error); }
+      if (/đăng nhập|hết hạn/i.test(j.error) && !body._retry) {
+        if (await silentAuth()) return api(action, { ...body, _retry: 1 });
+        setTk(''); showLogin(j.error);
+      }
       throw new Error(j.error);
     }
     return j.data;
@@ -45,18 +48,41 @@
     init();
   }
 
+  // Bộ nhớ trên máy: mở app hiện ngay dữ liệu lần trước, rồi cập nhật ngầm từ máy chủ
+  const cSave = (k, v) => { try { localStorage.setItem('vnd_c_' + k, JSON.stringify({ e: S.me && S.me.email, v })); } catch (e) {} };
+  const cLoad = k => { try { const o = JSON.parse(localStorage.getItem('vnd_c_' + k) || 'null'); return o && (!S.me || o.e === S.me.email) ? o.v : null; } catch (e) { return null; } };
+  const cClear = () => { try { Object.keys(localStorage).filter(k => k.startsWith('vnd_c_')).forEach(k => localStorage.removeItem(k)); } catch (e) {} };
+  const syncing = on => $('#btn-refresh').classList.toggle('spin', !!on);
+  function showMain(me) {
+    S.me = me;
+    $('#me-avatar').textContent = initials(me.tenViec);
+    $('#me-avatar').className = 'avatar sm ' + avClass(me.tenViec);
+    buildTabbar();
+    $('#scr-login').hidden = true; $('#scr-main').hidden = false;
+    $('#fab-new').hidden = !(isAdmin() && S.tab === 'viec');
+  }
+  let booted = false;
   async function boot() {
+    syncing(true);
     try {
-      S.me = await api('me');
-      $('#me-avatar').textContent = initials(S.me.tenViec);
-      $('#me-avatar').className = 'avatar sm ' + avClass(S.me.tenViec);
-      buildTabbar();
-      $('#scr-login').hidden = true; $('#scr-main').hidden = false;
-      $('#fab-new').hidden = !isAdmin();
-      await loadTasks();
-      handleDeepLink();
-      registerPush(false);
-    } catch (e) { showLogin(e.message); }
+      const d = await api('boot');
+      const first = !S.me;
+      showMain(d.me); S.tasks = d.tasks; cSave('boot', d); render();
+      if (first || !booted) { booted = true; handleDeepLink(); setTimeout(() => registerPush(false), 2500); }
+    } catch (e) { if (!S.me) showLogin(e.message); else toast('Chưa cập nhật được: ' + e.message); }
+    finally { syncing(false); }
+  }
+  // Phiên Google hết hạn (1 giờ): lấy phiên mới ngầm, không bắt đăng nhập lại
+  function silentAuth() {
+    return new Promise(ok => {
+      let done = false; const fin = v => { if (!done) { done = true; ok(v); } };
+      const go = () => {
+        if (!window.google?.accounts?.id) return setTimeout(go, 150);
+        google.accounts.id.initialize({ client_id: CFG.GOOGLE_CLIENT_ID, auto_select: true, callback: r => { setTk(r.credential); fin(true); } });
+        google.accounts.id.prompt(n => { if (n.isNotDisplayed && n.isNotDisplayed() || n.isSkippedMoment && n.isSkippedMoment()) fin(false); });
+      };
+      go(); setTimeout(() => fin(false), 10000);
+    });
   }
   const isAdmin = () => S.me && S.me.vaiTro === 'Quản trị';
   const initials = n => { const w = String(n || '?').replace(/^(Chị|Anh)\s+/i, '').trim().split(/\s+/); return n === 'Chủ tịch' ? 'CT' : n === 'Trợ Lý X' ? 'X' : (w[w.length - 1] || '?').slice(0, 2).toUpperCase(); };
@@ -120,11 +146,13 @@
   const isoOf = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const money = n => n ? Number(n).toLocaleString('vi-VN') + 'đ' : '';
   async function loadCal(force) {
-    if (C2.data && !force) return renderCal();
-    if (!C2.data) { const t = today(); C2.y = t.getFullYear(); C2.m = t.getMonth(); C2.sel = isoOf(t); }
-    $('#cal-list').innerHTML = '<div class="card skel"></div>';
-    try { C2.data = await api('listCalendar'); renderCal(); if (force) toast('Đã cập nhật'); }
-    catch (e) { $('#cal-list').innerHTML = `<p class="empty">Không tải được lịch. ${esc(e.message)}</p>`; }
+    if (C2.data && !force && C2.fresh) return renderCal();
+    if (!C2.data) { const t = today(); C2.y = t.getFullYear(); C2.m = t.getMonth(); C2.sel = isoOf(t); C2.data = cLoad('cal'); }
+    if (C2.data) renderCal(); else $('#cal-list').innerHTML = '<div class="card skel"></div>';
+    syncing(true);
+    try { C2.data = await api('listCalendar'); C2.fresh = true; cSave('cal', C2.data); if (S.tab === 'lich') renderCal(); if (force) toast('Đã cập nhật'); }
+    catch (e) { if (!C2.data) $('#cal-list').innerHTML = `<p class="empty">Không tải được lịch. ${esc(e.message)}</p>`; else toast('Chưa cập nhật được: ' + e.message); }
+    finally { syncing(false); }
   }
   const calEvents = () => (C2.data ? C2.data.suKien : []).filter(e => C2.type === 'all' || e.loai === C2.type);
   const isLate = e => !e.xong && e.ngay < isoOf(today());
@@ -193,10 +221,13 @@
   const tr = n => { const a = Math.abs(n || 0); const s = a >= 1e9 ? (a / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tỷ' : a >= 1e6 ? (a / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr' : a.toLocaleString('vi-VN') + 'đ'; return (n < 0 ? '−' : '') + s; };
   const ky = k => k ? 'Tháng ' + Number(k.slice(5, 7)) + '/' + k.slice(0, 4) : '';
   async function loadInc(force) {
-    if (R.inc && !force) return renderInc();
-    $('#inc').innerHTML = '<div class="card skel"></div>';
-    try { R.inc = await api('getIncome'); renderInc(); if (force) toast('Đã cập nhật'); }
-    catch (e) { $('#inc').innerHTML = `<p class="empty">${esc(e.message)}</p>`; }
+    if (R.inc && !force && R.incFresh) return renderInc();
+    if (!R.inc) R.inc = cLoad('inc');
+    if (R.inc) renderInc(); else $('#inc').innerHTML = '<div class="card skel"></div>';
+    syncing(true);
+    try { R.inc = await api('getIncome'); R.incFresh = true; cSave('inc', R.inc); if (S.tab === 'thunhap') renderInc(); if (force) toast('Đã cập nhật'); }
+    catch (e) { if (!R.inc) $('#inc').innerHTML = `<p class="empty">${esc(e.message)}</p>`; else toast('Chưa cập nhật được: ' + e.message); }
+    finally { syncing(false); }
   }
   function renderInc() {
     const d = R.inc, t = isoOf(today());
@@ -231,10 +262,13 @@
 
   // ---------------- Báo cáo (Chủ tịch) ----------------
   async function loadRep(force) {
-    if (R.rep && !force) return renderRep();
-    $('#rep').innerHTML = '<div class="card skel"></div><div class="card skel"></div>';
-    try { R.rep = await api('getReport'); renderRep(); if (force) toast('Đã cập nhật'); }
-    catch (e) { $('#rep').innerHTML = `<p class="empty">Không tải được báo cáo. ${esc(e.message)}</p>`; }
+    if (R.rep && !force && R.repFresh) return renderRep();
+    if (!R.rep) R.rep = cLoad('rep');
+    if (R.rep) renderRep(); else $('#rep').innerHTML = '<div class="card skel"></div><div class="card skel"></div>';
+    syncing(true);
+    try { R.rep = await api('getReport'); R.repFresh = true; cSave('rep', R.rep); if (S.tab === 'baocao') renderRep(); if (force) toast('Đã cập nhật'); }
+    catch (e) { if (!R.rep) $('#rep').innerHTML = `<p class="empty">Không tải được báo cáo. ${esc(e.message)}</p>`; else toast('Chưa cập nhật được: ' + e.message); }
+    finally { syncing(false); }
   }
   function bars(rows, max) {
     return rows.map(([label, v, cls, note]) => `<div class="bar-row" title="${esc(label)}: ${vnd(v)}">
@@ -305,9 +339,11 @@
 
   // ---------------- Bảng tin việc ----------------
   async function loadTasks(spin) {
-    if (!S.tasks.length || spin) $('#feed').innerHTML = '<div class="card skel"></div><div class="card skel"></div><div class="card skel"></div>';
-    try { S.tasks = await api('listTasks'); render(); if (spin) toast('Đã cập nhật'); }
-    catch (e) { $('#feed').innerHTML = ''; $('#empty').hidden = false; $('#empty').textContent = 'Không tải được việc. ' + e.message; }
+    if (!S.tasks.length) $('#feed').innerHTML = '<div class="card skel"></div><div class="card skel"></div><div class="card skel"></div>';
+    syncing(true);
+    try { S.tasks = await api('listTasks'); render(); cSave('boot', { me: S.me, tasks: S.tasks }); if (spin) toast('Đã cập nhật'); }
+    catch (e) { if (!S.tasks.length) { $('#feed').innerHTML = ''; $('#empty').hidden = false; $('#empty').textContent = 'Không tải được việc. ' + e.message; } else toast('Chưa cập nhật được: ' + e.message); }
+    finally { syncing(false); }
   }
 
   function render() {
@@ -600,8 +636,8 @@
     try { if (window.firebase && firebase.apps.length) await firebase.messaging().deleteToken(); } catch (x) {}
     try { localStorage.removeItem('vnd_push'); } catch (x) {}
     try { if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect(); } catch (x) {}
-    setTk(''); S.me = null; S.tasks = []; S.filter = 'open'; S.person = 'all'; S.tab = 'viec';
-    C2.data = null; R.inc = null; R.rep = null;
+    setTk(''); cClear(); S.me = null; S.tasks = []; S.filter = 'open'; S.person = 'all'; S.tab = 'viec';
+    C2.data = null; C2.fresh = false; R.inc = null; R.rep = null; R.incFresh = R.repFresh = false; booted = false;
     $('#acct-menu').hidden = true; b.disabled = false;
     $$('main.tab').forEach(m => m.hidden = m.id !== 'tab-viec');
     $('#feed').innerHTML = ''; $('#gsi-btn').innerHTML = '';
@@ -670,7 +706,32 @@
     if (e.data && e.data.type === 'open') { const u = new URL(e.data.link, location.href); history.replaceState(null, '', u.search ? location.pathname + u.search : location.pathname); handleDeepLink(); loadTasks(); }
   });
 
-  if ('serviceWorker' in navigator && CFG.API_URL !== 'MOCK') navigator.serviceWorker.register('sw.js').catch(() => {});
-  const tk = getTk();
-  if (tk && tokenOk(tk)) { S.token = tk; boot(); } else showLogin();
+  if ('serviceWorker' in navigator && CFG.API_URL !== 'MOCK') {
+    // Có bản app mới: nếu vừa mở app (chưa thao tác) thì tải lại ngay để dùng bản mới
+    const t0 = Date.now(); let touched = false; addEventListener('pointerdown', () => touched = true, { once: true });
+    const hadCtrl = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadCtrl) return;
+      if (!touched && Date.now() - t0 < 20000) location.reload(); else toast('Đã có bản mới, mở lại app để dùng');
+    });
+    navigator.serviceWorker.register('sw.js').then(r => r.update()).catch(() => {});
+  }
+  // Khởi động: có dữ liệu lần trước thì hiện ngay (dưới 1 giây), rồi cập nhật ngầm
+  (async () => {
+    const tk = getTk();
+    let cache = null; try { const o = JSON.parse(localStorage.getItem('vnd_c_boot') || 'null'); cache = o && o.v; } catch (e) {}
+    if (tk && cache && cache.me) {
+      S.token = tk; showMain(cache.me); S.tasks = cache.tasks || []; render(); handleDeepLink(); booted = true;
+      if (!tokenOk(tk)) { syncing(true); const ok = await silentAuth(); syncing(false); if (!ok) return showLogin('Phiên đăng nhập đã hết hạn, mời đăng nhập lại.'); }
+      boot();
+    } else if (tk && tokenOk(tk)) { S.token = tk; boot(); }
+    else showLogin();
+  })();
+  // Tự cập nhật khi mở lại app sau một lúc
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible' || !S.me) return;
+    if (!tokenOk(S.token || '')) { if (!(await silentAuth())) return; }
+    if (S.tab === 'lich') C2.fresh = false; if (S.tab === 'thunhap') R.incFresh = false; if (S.tab === 'baocao') R.repFresh = false;
+    ({ lich: () => loadCal(), thunhap: () => loadInc(), baocao: () => loadRep() }[S.tab] || (() => loadTasks()))();
+  });
 })();

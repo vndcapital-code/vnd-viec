@@ -1,20 +1,24 @@
-// Lưu sẵn giao diện để mở nhanh; dữ liệu luôn lấy mới từ máy chủ. Nhận thông báo bật lên.
-const V = 'vnd-viec-v11';
+// Mở nhanh: giao diện lấy ngay từ bộ nhớ máy, đồng thời tải bản mới ngầm cho lần sau. Nhận thông báo bật lên.
+const V = 'vnd-viec-v12';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'favicon.png', 'jspdf.umd.min.js'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL))); self.skipWaiting(); });
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(V).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))));
+  self.skipWaiting();
+});
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))));
-  self.clients.claim();
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET' || u.origin !== location.origin) return;
-  // Giao diện: lấy bản mới nếu có mạng, mất mạng thì dùng bản đã lưu
-  e.respondWith(fetch(e.request).then(r => {
-    if (r.ok) { const cp = r.clone(); caches.open(V).then(c => c.put(e.request, cp)); }
-    return r;
-  }).catch(() => caches.match(e.request, { ignoreSearch: true })));
+  const key = e.request.mode === 'navigate' ? './' : e.request;
+  e.respondWith(caches.open(V).then(async c => {
+    const hit = await c.match(key, { ignoreSearch: true });
+    const net = fetch(e.request, { cache: 'no-cache' }).then(r => { if (r.ok) c.put(key, r.clone()); return r; }).catch(() => null);
+    if (hit) { e.waitUntil(net); return hit; }
+    return (await net) || new Response('Mất kết nối', { status: 503 });
+  }));
 });
 
 // Thông báo từ máy chủ (Firebase gửi dạng dữ liệu: title, body, link, tag)
