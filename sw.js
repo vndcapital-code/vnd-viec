@@ -1,5 +1,5 @@
-// Lưu sẵn giao diện để mở nhanh; dữ liệu luôn lấy mới từ máy chủ.
-const V = 'vnd-viec-v8';
+// Lưu sẵn giao diện để mở nhanh; dữ liệu luôn lấy mới từ máy chủ. Nhận thông báo bật lên.
+const V = 'vnd-viec-v9';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'favicon.png', 'jspdf.umd.min.js'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL))); self.skipWaiting(); });
@@ -9,13 +9,30 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
-  if (e.request.method !== 'GET' || u.hostname.endsWith('script.google.com') || u.hostname.endsWith('googleusercontent.com')
-      || u.hostname === 'accounts.google.com') return;
+  if (e.request.method !== 'GET' || u.origin !== location.origin) return;
   // Giao diện: lấy bản mới nếu có mạng, mất mạng thì dùng bản đã lưu
   e.respondWith(fetch(e.request).then(r => {
-    if (r.ok && (u.origin === location.origin || false)) {
-      const cp = r.clone(); caches.open(V).then(c => c.put(e.request, cp));
-    }
+    if (r.ok) { const cp = r.clone(); caches.open(V).then(c => c.put(e.request, cp)); }
     return r;
-  }).catch(() => caches.match(e.request)));
+  }).catch(() => caches.match(e.request, { ignoreSearch: true })));
+});
+
+// Thông báo từ máy chủ (Firebase gửi dạng dữ liệu: title, body, link, tag)
+self.addEventListener('push', e => {
+  let j = {}; try { j = e.data ? e.data.json() : {}; } catch (x) { j = { data: { body: e.data && e.data.text() } }; }
+  const d = j.data || j.notification || j;
+  const title = d.title || 'VND Việc';
+  e.waitUntil(self.registration.showNotification(title, {
+    body: d.body || '', icon: 'icon-192.png', badge: 'favicon.png',
+    tag: d.tag || undefined, renotify: !!d.tag, data: { link: d.link || './' }
+  }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const link = new URL((e.notification.data && e.notification.data.link) || './', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+    const c = cs.find(x => x.url.startsWith(self.registration.scope));
+    if (c) { c.postMessage({ type: 'open', link: link }); return c.focus(); }
+    return self.clients.openWindow(link);
+  }));
 });

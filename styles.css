@@ -342,3 +342,13 @@ button.ev:hover { background: var(--hover); }
 .stats.kpi .stat b { font-size: 22px; white-space: nowrap; }
 .stats.kpi .stat span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 @media (min-width: 560px) { .stats.kpi { grid-template-columns: repeat(4, 1fr); } }
+
+/* ---------- Thông báo ---------- */
+.push-card { display: flex; align-items: center; gap: 12px; margin: 10px 12px 0; padding: 12px 14px; border-radius: 12px; background: var(--navy-soft); }
+.push-card > svg { width: 28px; height: 28px; fill: var(--navy); flex: none; }
+.push-card > div { flex: 1; min-width: 0; }
+.push-card b { font-size: 14.5px; color: var(--navy); }
+.push-card p { margin: 2px 0 0; font-size: 13px; color: var(--sub); }
+.btn-primary.sm { width: auto; margin: 0; height: 36px; padding: 0 16px; font-size: 14px; flex: none; }
+.stat.s-cho { background: linear-gradient(150deg, #7B3FB8, #5B2A8C); }
+.tag.cho { background: #F1E8FA; color: #6A2FA8; }

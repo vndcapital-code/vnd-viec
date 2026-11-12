@@ -54,6 +54,8 @@
       $('#scr-login').hidden = true; $('#scr-main').hidden = false;
       $('#fab-new').hidden = !isAdmin();
       await loadTasks();
+      handleDeepLink();
+      registerPush(false);
     } catch (e) { showLogin(e.message); }
   }
   const isAdmin = () => S.me && S.me.vaiTro === 'Quản trị';
@@ -311,7 +313,8 @@
     const mine = S.tasks.filter(t => S.person === 'all' || t.giaoCho === S.person);
     const open = mine.filter(t => !t.ngayXong);
     const n = k => open.filter(t => state(t) === k).length;
-    const stats = [['late', n('late'), 'Quá hạn'], ['soon', n('soon'), 'Sắp đến hạn'], ['open', open.length, 'Đang làm']];
+    const nCho = open.filter(t => t.choToi).length;
+    const stats = (nCho ? [['cho', nCho, 'Chờ bạn phản hồi']] : []).concat([['late', n('late'), 'Quá hạn'], ['soon', n('soon'), 'Sắp đến hạn'], ['open', open.length, 'Đang làm']]);
     if (n('wait')) stats.push(['wait', n('wait'), 'Chờ kiểm tra']);
     $('#stats').innerHTML = stats.map(([k, v, l]) => `<button class="stat s-${k}" data-f="${k}" aria-pressed="${S.filter === k && k !== 'open'}"><b>${v}</b><span>${l}</span></button>`).join('');
 
@@ -328,6 +331,7 @@
     const q = norm(S.q.trim());
     let list = S.filter === 'done' ? mine.filter(t => t.ngayXong) : open;
     if (['late', 'soon', 'wait'].includes(S.filter)) list = list.filter(t => state(t) === S.filter);
+    if (S.filter === 'cho') list = list.filter(t => t.choToi);
     if (q) list = list.filter(t => norm(t.ma + ' ' + t.viec + ' ' + t.giaoCho).includes(q));
     const rank = { late: 0, soon: 1, wait: 2, open: 3, done: 4 };
     list.sort((a, b) => rank[state(a)] - rank[state(b)] || (a.han || '9').localeCompare(b.han || '9'));
@@ -342,7 +346,7 @@
             <span class="plate">${esc(t.ma)}</span>
           </div>
           <p class="post-text">${esc(t.viec)}</p>
-          <div class="post-meta"><span class="tag ${cls}">${label}</span><span>${t.soTraLoi ? t.soTraLoi + ' trao đổi' : 'Chưa có trao đổi'}</span></div>
+          <div class="post-meta"><span class="tag ${cls}">${label}</span>${t.choToi ? '<span class="tag cho">Chờ bạn phản hồi</span>' : ''}<span>${t.soTraLoi ? t.soTraLoi + ' trao đổi' : 'Chưa có trao đổi'}</span></div>
         </button>
         <div class="post-actions">
           <button data-ma="${esc(t.ma)}" data-go="reply">${icon('chat')}Trả lời</button>
@@ -351,7 +355,8 @@
       </article>`;
     }).join('');
     $('#empty').hidden = list.length > 0;
-    $('#empty').textContent = S.q ? 'Không có việc khớp "' + S.q + '".' : S.filter === 'done' ? 'Chưa có việc đã xong.' : 'Không còn việc nào ở mục này.';
+    $('#empty').textContent = S.q ? 'Không có việc khớp "' + S.q + '".' : S.filter === 'done' ? 'Chưa có việc đã xong.' : S.filter === 'cho' ? 'Không còn việc nào chờ bạn phản hồi.' : 'Không còn việc nào ở mục này.';
+    renderPushCard();
   }
   $('#stats').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; S.filter = S.filter === b.dataset.f ? 'open' : b.dataset.f; render(); });
   $('#chips').addEventListener('click', e => {
@@ -575,6 +580,68 @@
 
   let tt;
   function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2800); }
+
+
+  // ---------------- Thông báo bật lên (Firebase Cloud Messaging) ----------------
+  const FB = CFG.FIREBASE || null;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const pushOK = () => FB && 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+  let pushBusy = false;
+  function loadScript(src) { return new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = bad; document.head.appendChild(s); }); }
+  async function fbMessaging() {
+    if (!window.firebase) {
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+    }
+    if (!firebase.apps.length) firebase.initializeApp(FB.config);
+    return firebase.messaging();
+  }
+  async function registerPush(ask) {
+    if (!pushOK() || pushBusy) return false;
+    if (Notification.permission === 'denied') return false;
+    if (Notification.permission !== 'granted') {
+      if (!ask) return false;
+      if (await Notification.requestPermission() !== 'granted') return false;
+    }
+    pushBusy = true;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const tok = await (await fbMessaging()).getToken({ vapidKey: FB.vapidKey, serviceWorkerRegistration: reg });
+      if (!tok) return false;
+      let last = null; try { last = localStorage.getItem('vnd_push'); } catch (e) {}
+      if (ask || last !== tok + '|' + S.me.email) {
+        await api('saveDevice', { fcmToken: tok });
+        try { localStorage.setItem('vnd_push', tok + '|' + S.me.email); } catch (e) {}
+      }
+      return true;
+    } catch (e) { if (ask) toast('Chưa bật được thông báo: ' + e.message); return false; }
+    finally { pushBusy = false; renderPushCard(); }
+  }
+  function renderPushCard() {
+    const box = $('#push-card'); if (!box) return;
+    let html = '';
+    if (FB && 'Notification' in window && Notification.permission === 'granted') html = '';
+    else if (FB && isIOS && !standalone) html = `<div class="push-card">${icon('bell')}<div><b>Nhận thông báo việc trên iPhone</b><p>Mở bằng Safari, bấm nút Chia sẻ → <b>Thêm vào MH chính</b>, rồi mở app từ màn hình chính để bật thông báo.</p></div></div>`;
+    else if (pushOK() && Notification.permission === 'denied') html = `<div class="push-card">${icon('bell')}<div><b>Thông báo đang bị chặn</b><p>Vào cài đặt trình duyệt, mục Thông báo, cho phép trang này rồi tải lại app.</p></div></div>`;
+    else if (pushOK()) html = `<div class="push-card">${icon('bell')}<div><b>Bật thông báo trên máy này</b><p>Báo ngay khi có việc mới, có trả lời; 8:00 sáng nhắc việc chưa phản hồi.</p></div><button class="btn-primary sm" id="btn-push">Bật</button></div>`;
+    box.innerHTML = html; box.hidden = !html;
+  }
+  document.addEventListener('click', async e => {
+    if (!e.target.closest('#btn-push')) return;
+    if (await registerPush(true)) toast('Đã bật thông báo trên máy này');
+  });
+  // Mở từ thông báo: ?ma=KT-25 hoặc ?f=cho
+  function handleDeepLink() {
+    const p = new URLSearchParams(location.search); const ma = p.get('ma'), f = p.get('f');
+    if (!ma && !f) return;
+    history.replaceState(null, '', location.pathname);
+    if (f === 'cho') { S.filter = 'cho'; render(); }
+    if (ma) openTask(ma);
+  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'open') { const u = new URL(e.data.link, location.href); history.replaceState(null, '', u.search ? location.pathname + u.search : location.pathname); handleDeepLink(); loadTasks(); }
+  });
 
   if ('serviceWorker' in navigator && CFG.API_URL !== 'MOCK') navigator.serviceWorker.register('sw.js').catch(() => {});
   const tk = getTk();
