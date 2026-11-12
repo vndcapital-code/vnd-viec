@@ -75,9 +75,11 @@
     $('#fab-new').hidden = !(isAdmin() && S.tab === 'viec');
     $('#searchbar').hidden = true;
     if (S.tab === 'lich') loadCal();
+    if (S.tab === 'thunhap') loadInc();
+    if (S.tab === 'baocao') loadRep();
   });
   $('#btn-search').onclick = () => { const sb = $('#searchbar'); sb.hidden = !sb.hidden; if (!sb.hidden) $('#q').focus(); else { $('#q').value = ''; S.q = ''; render(); } };
-  $('#btn-refresh').onclick = () => S.tab === 'lich' ? loadCal(true) : loadTasks(true);
+  $('#btn-refresh').onclick = () => ({ lich: loadCal, thunhap: loadInc, baocao: loadRep }[S.tab] || loadTasks)(true);
 
   // Điều hướng quay lại
   document.addEventListener('click', e => { if (e.target.closest('[data-back]')) history.back(); });
@@ -180,6 +182,123 @@
   $('#cal-next').onclick = () => shiftMonth(1);
   $('#cal-today').onclick = () => { const t = today(); C2.y = t.getFullYear(); C2.m = t.getMonth(); C2.sel = isoOf(t); renderCal(); };
   $('#cal-list').addEventListener('click', e => { const b = e.target.closest('[data-ma]'); if (b) openTask(b.dataset.ma); });
+
+
+  // ---------------- Thu nhập (kế toán) ----------------
+  const R = { inc: null, rep: null };
+  const vnd = n => (n < 0 ? '−' : '') + Math.abs(Math.round(n || 0)).toLocaleString('vi-VN') + 'đ';
+  const tr = n => { const a = Math.abs(n || 0); const s = a >= 1e9 ? (a / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tỷ' : a >= 1e6 ? (a / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr' : a.toLocaleString('vi-VN') + 'đ'; return (n < 0 ? '−' : '') + s; };
+  const ky = k => k ? 'Tháng ' + Number(k.slice(5, 7)) + '/' + k.slice(0, 4) : '';
+  async function loadInc(force) {
+    if (R.inc && !force) return renderInc();
+    $('#inc').innerHTML = '<div class="card skel"></div>';
+    try { R.inc = await api('getIncome'); renderInc(); if (force) toast('Đã cập nhật'); }
+    catch (e) { $('#inc').innerHTML = `<p class="empty">${esc(e.message)}</p>`; }
+  }
+  function renderInc() {
+    const d = R.inc, t = isoOf(today());
+    const nhan = d.thang.filter(m => m.ngayNhan), chua = d.thang.filter(m => !m.ngayNhan);
+    const sum = (a, k) => a.reduce((x, m) => x + (m[k] || 0), 0);
+    const c = d.coCau, gross = c.luongChinh + c.phuCap + c.anTrua * c.ngayCong;
+    $('#inc').innerHTML = `
+      <div class="stats">
+        <div class="stat s-ok"><b>${tr(sum(nhan, 'thucNhan'))}</b><span>Đã nhận (${nhan.length} tháng)</span></div>
+        <div class="stat ${chua.some(m => m.hanTra < t) ? 's-late' : 's-open'}"><b>${tr(sum(chua, 'thucNhan'))}</b><span>Chưa nhận (${chua.length} tháng)</span></div>
+      </div>
+      <section class="card rp">
+        <h3 class="rp-h">Từng tháng</h3>
+        ${d.thang.length ? d.thang.map(m => `<div class="inc-row">
+          <div class="inc-main"><b>${esc(ky(m.ky))}</b>
+            <small>Tổng ${vnd(m.tongThuNhap)} · trừ thuế TNCN ${vnd(m.khauTru)}</small>
+            <small>${m.ngayNhan ? 'Nhận ngày ' + dm(m.ngayNhan) : 'Hạn trả ' + dm(m.hanTra)}</small></div>
+          <div class="inc-right"><b>${vnd(m.thucNhan)}</b>${m.ngayNhan ? '<span class="tag done">Đã nhận</span>' : m.hanTra < t ? '<span class="tag late">Chậm trả</span>' : '<span class="tag">Chưa đến hạn</span>'}</div>
+        </div>`).join('') : '<p class="hint rp-pad">Chưa có kỳ lương nào.</p>'}
+      </section>
+      <section class="card rp">
+        <h3 class="rp-h">Cơ cấu lương mỗi tháng</h3>
+        <div class="kv"><span>Lương chính</span><b>${vnd(c.luongChinh)}</b></div>
+        <div class="kv"><span>Phụ cấp điện thoại, xăng</span><b>${vnd(c.phuCap)}</b></div>
+        <div class="kv"><span>Ăn trưa ${vnd(c.anTrua)} × ${c.ngayCong} ngày công</span><b>${vnd(c.anTrua * c.ngayCong)}</b></div>
+        <div class="kv sum"><span>Tổng thu nhập</span><b>${vnd(gross)}</b></div>
+        <div class="kv"><span>Thuế TNCN tạm khấu trừ</span><b>−${vnd(c.thueThang)}</b></div>
+        <div class="kv sum"><span>Thực nhận dự kiến</span><b>${vnd(gross - c.thueThang)}</b></div>
+        ${d.hopDong ? `<p class="hint rp-pad">Hợp đồng ${esc(d.hopDong.so)}, từ ${esc(dm(d.hopDong.tu))} đến ${esc(dm(d.hopDong.den))}/${esc(String(d.hopDong.den).slice(0, 4))}. Trả lương: ${esc(d.hopDong.kyTra)}. Ngày công thực tế theo chấm công.</p>` : ''}
+      </section>`;
+  }
+
+  // ---------------- Báo cáo (Chủ tịch) ----------------
+  async function loadRep(force) {
+    if (R.rep && !force) return renderRep();
+    $('#rep').innerHTML = '<div class="card skel"></div><div class="card skel"></div>';
+    try { R.rep = await api('getReport'); renderRep(); if (force) toast('Đã cập nhật'); }
+    catch (e) { $('#rep').innerHTML = `<p class="empty">Không tải được báo cáo. ${esc(e.message)}</p>`; }
+  }
+  function bars(rows, max) {
+    return rows.map(([label, v, cls, note]) => `<div class="bar-row" title="${esc(label)}: ${vnd(v)}">
+      <span class="bl">${esc(label)}</span>
+      <span class="bt"><i class="${cls || ''}" style="width:${max ? Math.max(1.5, Math.abs(v) / max * 100) : 0}%"></i></span>
+      <b class="bv">${tr(v)}</b>${note ? `<small class="bn">${esc(note)}</small>` : ''}</div>`).join('');
+  }
+  function renderRep() {
+    const d = R.rep, L = d.loiNhuan, D = d.dongTien, N = d.congNo, H = d.han;
+    const lateTotal = Object.values(H.nhom).reduce((a, g) => a + g.quaHan, 0);
+    let html = `<div class="stats kpi">
+      <div class="stat s-open"><b>${tr(D.soDu)}</b><span>Tiền TK công ty</span></div>
+      ${L ? `<div class="stat ${L.sauThue >= 0 ? 's-ok' : 's-late'}"><b>${tr(L.sauThue)}</b><span>Lợi nhuận lũy kế</span></div>` : ''}
+      ${N.phaiThu ? `<div class="stat ${N.phaiThu.quaHan ? 's-late' : 's-soon'}"><b>${tr(N.phaiThu.conLai)}</b><span>${N.phaiThu.quaHan ? 'Phải thu, ' + tr(N.phaiThu.quaHan) + ' quá hạn' : 'Còn phải thu T&T'}</span></div>` : ''}
+      <div class="stat ${lateTotal ? 's-late' : 's-ok'}" data-go="lich"><b>${lateTotal}</b><span>Mốc quá hạn</span></div></div>`;
+    if (L) {
+      const max = Math.max(L.doanhThu, 1);
+      html += `<section class="card rp"><h3 class="rp-h">Lợi nhuận</h3><p class="hint rp-pad">Lũy kế từ 26/06/2026 đến ${esc(dm(L.ngay))}, theo sổ kế toán.</p>
+        <div class="bars">${bars([['Doanh thu cho thuê xe', L.doanhThu, 'b-in'], ['Giá vốn (khấu hao, chi phí xe)', -L.giaVon, 'b-out'],
+          ['Chi phí lãi vay', -L.cpTaiChinh, 'b-out'], ['Chi phí quản lý', -L.cpQuanLy, 'b-out']].concat(L.dtTaiChinh ? [['Thu tài chính', L.dtTaiChinh, 'b-in']] : []).concat(L.khac ? [['Lợi nhuận khác', L.khac, L.khac >= 0 ? 'b-in' : 'b-out']] : []), max)}</div>
+        <div class="kv sum"><span>Lợi nhuận trước thuế</span><b class="${L.truocThue >= 0 ? 'pos' : 'neg'}">${vnd(L.truocThue)}</b></div>
+        <div class="kv"><span>Biên lợi nhuận trên doanh thu</span><b>${L.doanhThu ? Math.round(L.truocThue / L.doanhThu * 100) + '%' : '—'}</b></div>
+        <div class="kv"><span>Tổng tài sản</span><b>${vnd(L.tongTaiSan)}</b></div>
+        <div class="kv"><span>Nợ phải trả / Vốn chủ sở hữu</span><b>${tr(L.noPhaiTra)} / ${tr(L.vonChu)}</b></div></section>`;
+    } else html += `<section class="card rp"><h3 class="rp-h">Lợi nhuận</h3><p class="hint rp-pad">Chưa đọc được sổ kế toán: ${esc(d.loiNhuanLoi || '')}</p></section>`;
+    const maxD = Math.max(...D.thang.map(m => Math.abs(m.cuoiKy)), 1);
+    html += `<section class="card rp"><h3 class="rp-h">Dòng tiền tài khoản công ty</h3><p class="hint rp-pad">Số dư cuối mỗi tháng theo dự báo 3 tháng.</p>
+      <div class="cols" role="img" aria-label="${esc(D.thang.map(m => m.ten + ': ' + vnd(m.cuoiKy)).join('; '))}">
+        ${D.thang.map(m => `<div class="col" title="${esc(m.ten)}: đầu kỳ ${vnd(m.dauKy)}, thu ${vnd(m.thu)}, chi ${vnd(m.chi)}, cuối kỳ ${vnd(m.cuoiKy)}">
+          <b>${tr(m.cuoiKy)}</b><span class="colbar"><i class="${m.cuoiKy < D.tonQuyToiThieu ? 'warn' : ''}" style="height:${Math.max(3, Math.abs(m.cuoiKy) / maxD * 100)}%"></i></span><small>${esc(m.ten.replace('Tháng ', 'T'))}</small></div>`).join('')}
+      </div>
+      <table class="tbl"><thead><tr><th></th>${D.thang.map(m => `<th>${esc(m.ten.replace('Tháng ', 'T'))}</th>`).join('')}</tr></thead><tbody>
+        <tr><td>Đầu kỳ</td>${D.thang.map(m => `<td>${tr(m.dauKy)}</td>`).join('')}</tr>
+        <tr><td>Thu</td>${D.thang.map(m => `<td class="pos">+${tr(m.thu)}</td>`).join('')}</tr>
+        <tr><td>Chi</td>${D.thang.map(m => `<td class="neg">−${tr(m.chi)}</td>`).join('')}</tr>
+        <tr class="sum"><td>Cuối kỳ</td>${D.thang.map(m => `<td>${tr(m.cuoiKy)}</td>`).join('')}</tr></tbody></table>
+      <p class="hint rp-pad">Tồn quỹ tối thiểu nên giữ ${tr(D.tonQuyToiThieu)}. Nếu T&T không trả, số dư hiện tại đủ trả lãi và lương khoảng ${D.soThangChiuDuoc} tháng.</p></section>`;
+    html += `<section class="card rp"><h3 class="rp-h">Công nợ</h3>
+      <div class="rp-sub">Phải thu tiền thuê xe T&T</div>
+      ${N.hoaDon.map(h => `<div class="inc-row"><div class="inc-main"><b>${esc(/^\d/.test(h.so) ? 'HĐ ' + h.so : h.so)}</b><small>${esc(h.xe)} · hạn ${esc(dm(h.han))}</small></div>
+        <div class="inc-right"><b>${vnd(h.conLai)}</b>${!h.conLai ? '<span class="tag done">Đã thu</span>' : h.han && h.han < isoOf(today()) ? '<span class="tag late">Quá hạn</span>' : '<span class="tag">Chưa đến hạn</span>'}</div></div>`).join('')}
+      ${N.phaiThu && N.phaiThu.laiPhat ? `<div class="kv"><span>Lãi phạt chậm trả tính đến hôm nay</span><b>${vnd(N.phaiThu.laiPhat)}</b></div>` : ''}
+      <div class="rp-sub">Phải trả</div>
+      <div class="kv"><span>Gốc vay bà Nga (đáo hạn 17/09/2029)</span><b>${vnd(N.vayGoc)}</b></div>
+      <div class="kv"><span>Lãi vay dồn tích chưa đến kỳ trả</span><b>${vnd(N.laiDonTich)}</b></div>
+      ${N.laiQuaHan ? `<div class="kv"><span>Lãi vay quá hạn</span><b class="neg">${vnd(N.laiQuaHan)}</b></div>` : ''}
+      <div class="kv"><span>Nợ Chủ tịch trên sổ kế toán</span><b>${vnd(N.chuTichSoKeToan)}</b></div>
+      <div class="kv"><span>Chủ tịch đã bỏ ra (sổ quản trị, chưa hoàn)</span><b>${vnd(N.chuTichQuanTri)}</b></div></section>`;
+    const NAMES = { viec: 'Việc', thu: 'Thu tiền', chi: 'Chi tiền', phaply: 'Pháp lý, thuế', xe: 'Giấy tờ xe', hd: 'Hợp đồng' };
+    html += `<section class="card rp"><h3 class="rp-h">Hạn các loại</h3>
+      <table class="tbl"><thead><tr><th>Loại</th><th>Quá hạn</th><th>30 ngày tới</th></tr></thead><tbody>
+      ${Object.keys(NAMES).filter(k => H.nhom[k]).map(k => `<tr><td><i class="dot d-${k}"></i> ${NAMES[k]}</td><td class="${H.nhom[k].quaHan ? 'neg' : ''}">${H.nhom[k].quaHan}</td><td>${H.nhom[k].trong30}</td></tr>`).join('')}
+      </tbody></table>
+      ${H.quaHan.slice(0, 8).map(e => evRow(e, true)).join('')}
+      <button class="btn-link" data-go="lich">Xem đầy đủ trên Lịch</button></section>`;
+    const pb = x => x.thueThang ? x.chiPhi / x.thueThang : 1e12; const xe = d.xe.slice().sort((a, b) => pb(a) - pb(b));
+    html += `<section class="card rp"><h3 class="rp-h">Hoàn vốn theo xe</h3><p class="hint rp-pad">Tổng chi phí VND Capital đã bỏ vào từng xe chia cho tiền thuê mỗi tháng (chưa VAT).</p>
+      <table class="tbl xe"><thead><tr><th>Xe</th><th>Đã bỏ vào</th><th>Thuê/tháng</th><th>Hoàn vốn</th></tr></thead><tbody>
+      ${xe.map(x => `<tr><td><b>${esc(x.bks)}</b><small>${esc(x.loai)}</small></td><td>${tr(x.chiPhi)}</td><td>${x.thueThang ? tr(x.thueThang) : '<span class="neg">Chưa cho thuê</span>'}</td><td>${x.thueThang ? Math.round(x.chiPhi / x.thueThang) + ' tháng' : '—'}</td></tr>`).join('')}
+      </tbody></table></section>
+      <p class="hint rp-foot">Số liệu lấy trực tiếp từ sheet Quản lý VND Capital và Sổ kế toán, lúc ${esc(String(d.capNhat).slice(11, 16))}. Bấm nút tải lại ở trên để cập nhật.</p>`;
+    $('#rep').innerHTML = html;
+  }
+  $('#rep').addEventListener('click', e => {
+    if (e.target.closest('[data-go="lich"]')) return $('[data-tab="lich"]').click();
+    const b = e.target.closest('[data-ma]'); if (b) openTask(b.dataset.ma);
+  });
 
   // ---------------- Bảng tin việc ----------------
   async function loadTasks(spin) {

@@ -295,3 +295,50 @@ button.ev:hover { background: var(--hover); }
 .ev-note { font-size: 12.5px; color: var(--sub); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .ev.is-done .ev-label, .ev.is-done .ev-text { color: var(--sub); }
 @media (min-width: 680px) { .cal-day { height: 64px; } }
+
+/* ---------- Thu nhập & Báo cáo ---------- */
+.stat.s-ok { background: linear-gradient(150deg, #3D9A66, #1E7A47); }
+.stat[data-go] { cursor: pointer; }
+.rp { margin-top: 8px; padding: 4px 0 8px; }
+.rp-h { margin: 0; padding: 12px 16px 4px; font-size: 17px; font-weight: 800; color: var(--navy); }
+.rp-pad { padding: 0 16px 8px; margin: 0; }
+.rp-sub { padding: 12px 16px 4px; font-size: 13px; font-weight: 800; color: var(--sub); }
+.rp-foot { text-align: center; padding: 12px 16px 0; }
+.inc-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.inc-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.inc-main b { font-size: 15px; }
+.inc-main small { color: var(--sub); font-size: 13px; }
+.inc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
+.inc-right b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 8px 16px; border-top: 1px solid var(--line); font-size: 14px; }
+.kv span { color: var(--sub); }
+.kv b { font-variant-numeric: tabular-nums; text-align: right; }
+.kv.sum span, .kv.sum b { color: var(--text); font-weight: 800; }
+.pos { color: var(--green); } .neg { color: var(--red); }
+.bars { padding: 4px 16px 8px; display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: minmax(110px, 38%) 1fr auto; align-items: center; gap: 10px; font-size: 13.5px; }
+.bar-row .bl { color: var(--text); }
+.bar-row .bt { height: 10px; background: var(--hover); border-radius: 5px; overflow: hidden; }
+.bar-row .bt i { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--navy); }
+.bar-row .bt i.b-out { background: var(--orange); }
+.bar-row .bv { font-variant-numeric: tabular-nums; min-width: 64px; text-align: right; }
+.cols { display: flex; gap: 16px; align-items: flex-end; height: 170px; padding: 8px 24px 0; }
+.col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; }
+.col b { font-size: 13px; font-variant-numeric: tabular-nums; }
+.col small { font-size: 12px; color: var(--sub); font-weight: 700; }
+.colbar { flex: 1; width: 100%; max-width: 56px; display: flex; align-items: flex-end; }
+.colbar i { display: block; width: 100%; background: var(--navy); border-radius: 4px 4px 0 0; }
+.colbar i.warn { background: var(--red); }
+.tbl { width: calc(100% - 32px); margin: 8px 16px; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.tbl th { text-align: right; font-size: 12px; color: var(--sub); font-weight: 700; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl td { text-align: right; padding: 7px 4px; border-bottom: 1px solid var(--line); }
+.tbl tr.sum td { font-weight: 800; }
+.tbl.xe td small { display: block; color: var(--sub); font-size: 12px; }
+.tbl .dot { margin-right: 4px; }
+.btn-link { display: block; margin: 6px 16px 4px; height: 40px; width: calc(100% - 32px); border-radius: 8px; background: var(--hover); font-weight: 700; color: var(--navy); }
+.stats.kpi { display: grid; grid-template-columns: 1fr 1fr; overflow: visible; }
+.stats.kpi .stat { height: 72px; }
+.stats.kpi .stat b { font-size: 22px; white-space: nowrap; }
+.stats.kpi .stat span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+@media (min-width: 560px) { .stats.kpi { grid-template-columns: repeat(4, 1fr); } }

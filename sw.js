@@ -1,5 +1,5 @@
 // Lưu sẵn giao diện để mở nhanh; dữ liệu luôn lấy mới từ máy chủ.
-const V = 'vnd-viec-v7';
+const V = 'vnd-viec-v8';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'favicon.png', 'jspdf.umd.min.js'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL))); self.skipWaiting(); });
