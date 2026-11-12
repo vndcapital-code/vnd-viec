@@ -352,3 +352,12 @@ button.ev:hover { background: var(--hover); }
 .btn-primary.sm { width: auto; margin: 0; height: 36px; padding: 0 16px; font-size: 14px; flex: none; }
 .stat.s-cho { background: linear-gradient(150deg, #7B3FB8, #5B2A8C); }
 .tag.cho { background: #F1E8FA; color: #6A2FA8; }
+
+/* ---------- Tài khoản ---------- */
+button.avatar { cursor: pointer; border: 0; }
+button.avatar:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+.acct-head { display: flex; align-items: center; gap: 12px; padding: 4px 8px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+.acct-head b { display: block; font-size: 16px; }
+.acct-head small { display: block; font-size: 13px; color: var(--sub); }
+.ic.r { background: var(--red-soft); color: var(--red); }
+.ic svg { width: 22px; height: 22px; fill: currentColor; }

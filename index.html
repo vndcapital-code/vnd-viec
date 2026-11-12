@@ -21,6 +21,7 @@
   <symbol id="i-search" viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 1 7.4 5H17v2h6V5h-2v2.3A10 10 0 1 0 22 13h-2a8 8 0 1 1-8-9z"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3a1.5 1.5 0 0 0-3 0v1.16A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm6.6 4.6-1.4 1.4 2 2H9v2h8.2l-2 2 1.4 1.4L21 12z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.4 4.6 8 12l7.4 7.4-1.4 1.4L5.2 12 14 3.2z"/></symbol>
   <symbol id="i-camera" viewBox="0 0 24 24"><path d="M9 3h6l1.8 2H20a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3.2zm3 5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></symbol>
   <symbol id="i-image" viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 13h16l-5-6-3.5 4.2L9 12zM8 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></symbol>
@@ -52,7 +53,7 @@
       <div class="appbar-actions">
         <button class="round" id="btn-search" aria-label="Tìm việc"><svg><use href="#i-search"/></svg></button>
         <button class="round" id="btn-refresh" aria-label="Tải lại"><svg><use href="#i-refresh"/></svg></button>
-        <span class="avatar sm" id="me-avatar" aria-hidden="true"></span>
+        <button class="avatar sm" id="me-avatar" aria-label="Tài khoản và đăng xuất"></button>
       </div>
     </header>
     <div class="searchbar" id="searchbar" hidden>
@@ -117,6 +118,13 @@
   </section>
 
   <!-- Bảng chọn của nút + -->
+  <div id="acct-menu" class="sheet-backdrop" hidden>
+    <div class="sheet" role="dialog" aria-label="Tài khoản">
+      <div class="sheet-handle"></div>
+      <div class="acct-head"><span class="avatar" id="acct-av"></span><div><b id="acct-name"></b><small id="acct-mail"></small><small id="acct-role"></small></div></div>
+      <button type="button" data-act="logout"><span class="ic r"><svg><use href="#i-logout"/></svg></span><span><b>Đăng xuất</b><small>Thoát tài khoản này để đăng nhập bằng Gmail khác</small></span></button>
+    </div>
+  </div>
   <div id="plus-menu" class="sheet-backdrop" hidden>
     <div class="sheet" role="menu" aria-label="Thêm vào trả lời">
       <div class="sheet-handle"></div>

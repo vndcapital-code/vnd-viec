@@ -88,6 +88,7 @@
   window.addEventListener('popstate', () => {
     if (!$('#cam').hidden) return closeCam();
     if (!$('#plus-menu').hidden) return ($('#plus-menu').hidden = true);
+    if (!$('#acct-menu').hidden) return ($('#acct-menu').hidden = true);
     if (!$('#scr-new').hidden) return ($('#scr-new').hidden = true);
     $('#scr-task').hidden = true;
   });
@@ -581,6 +582,32 @@
   let tt;
   function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2800); }
 
+
+
+  // ---------------- Tài khoản / Đăng xuất ----------------
+  $('#me-avatar').onclick = () => {
+    if (!S.me) return;
+    $('#acct-av').textContent = initials(S.me.tenViec); $('#acct-av').className = 'avatar ' + avClass(S.me.tenViec);
+    $('#acct-name').textContent = S.me.ten || S.me.tenViec; $('#acct-mail').textContent = S.me.email;
+    $('#acct-role').textContent = 'Vai trò: ' + S.me.vaiTro;
+    history.pushState({ s: 'acct' }, ''); $('#acct-menu').hidden = false;
+  };
+  $('#acct-menu').addEventListener('click', async e => {
+    const b = e.target.closest('[data-act="logout"]');
+    if (!b) { if (e.target === $('#acct-menu')) history.back(); return; }
+    b.disabled = true;
+    // Ngừng nhận thông báo của tài khoản này trên máy này
+    try { if (window.firebase && firebase.apps.length) await firebase.messaging().deleteToken(); } catch (x) {}
+    try { localStorage.removeItem('vnd_push'); } catch (x) {}
+    try { if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect(); } catch (x) {}
+    setTk(''); S.me = null; S.tasks = []; S.filter = 'open'; S.person = 'all'; S.tab = 'viec';
+    C2.data = null; R.inc = null; R.rep = null;
+    $('#acct-menu').hidden = true; b.disabled = false;
+    $$('main.tab').forEach(m => m.hidden = m.id !== 'tab-viec');
+    $('#feed').innerHTML = ''; $('#gsi-btn').innerHTML = '';
+    history.replaceState(null, '', location.pathname);
+    showLogin('Đã đăng xuất. Chọn tài khoản Google để đăng nhập.');
+  });
 
   // ---------------- Thông báo bật lên (Firebase Cloud Messaging) ----------------
   const FB = CFG.FIREBASE || null;
